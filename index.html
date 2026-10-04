@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>通用刷题器 · 智能题库学习平台</title>
+<meta name="theme-color" content="#007aff" id="meta-theme-color">
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="style.css?v=2.0">
+</head>
+<body>
+
+<!-- 苹果毛玻璃环境流光底色 -->
+<div class="ambient-mesh" aria-hidden="true">
+  <div class="glow-orb orb-1"></div>
+  <div class="glow-orb orb-2"></div>
+  <div class="glow-orb orb-3"></div>
+</div>
+
+<div id="loading">
+  <div class="spinner"></div>
+  <div style="font-size:14px;opacity:.9;margin-top:12px">正在载入通用题库引擎…</div>
+</div>
+
+<div id="app">
+
+  <!-- ==================== 1. 首页 (Home Screen) ==================== -->
+  <section id="screen-home" class="screen active">
+    <div class="scroll">
+      <div class="hero">
+        <div class="hero-header">
+          <!-- 题库切换入口胶囊 -->
+          <button class="bank-pill-btn" id="bank-picker-btn" onclick="BankManager.openDrawer()" title="点击切换当前题库">
+            <span id="cur-bank-icon">💻</span>
+            <span id="cur-bank-name">通用示范题库</span>
+            <span style="font-size:10px;opacity:.7">▾</span>
+          </button>
+          <div style="display:flex;align-items:center;gap:8px">
+            <button class="btn-compact" id="btn-import-header" style="background:var(--glass-bg-elevated);color:var(--brand);border:1px solid var(--line)" onclick="Nav.goto('import')">
+              ➕ 导入题库
+            </button>
+            <button class="theme-pill" id="theme-btn" onclick="Theme.cycle()" title="切换外观主题" aria-label="切换外观主题">
+              <span id="theme-icon">🌓</span>
+              <span id="theme-label">自动</span>
+            </button>
+          </div>
+        </div>
+
+        <h1 id="home-title" style="margin-top:8px">通用智能刷题器</h1>
+        <p id="home-desc">理论知识题库 · 顺序练习 / 随机练习 / 全真模拟</p>
+
+        <div class="stat-row">
+          <div class="stat"><b id="st-total">0</b><span>题库总题数</span></div>
+          <div class="stat"><b id="st-done">0%</b><span>练习进度</span></div>
+          <div class="stat"><b id="st-rate">—</b><span>正确率</span></div>
+        </div>
+      </div>
+
+      <div class="wrap pull-up">
+        <!-- 学习进度卡片 -->
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:9px">
+            <span style="font-size:14px;font-weight:600">本题库学习进度</span>
+            <span style="font-size:12.5px;color:var(--text-3)" id="prog-txt">已练习 0 / 0 题</span>
+          </div>
+          <div class="bar"><i id="prog-bar" style="width:0%"></i></div>
+        </div>
+
+        <!-- 刷题模式 -->
+        <div class="section-title">练习模式</div>
+        <div class="modes">
+          <button class="mode" onclick="Home.startPractice('order')">
+            <span class="mi blue">📖</span>
+            <b>基础练习</b>
+            <span id="order-sub">按题库顺序逐题作答，记忆学习</span>
+          </button>
+          <button class="mode" onclick="Home.startPractice('random')">
+            <span class="mi violet">🔀</span>
+            <b>随机练习</b>
+            <span>打乱题目顺序，检验真实掌握程度</span>
+          </button>
+          <button class="mode" onclick="Home.goto('exam-setup')">
+            <span class="mi green">⏱️</span>
+            <b>模拟考试</b>
+            <span>标准考卷或自定义卷，限时全真评分</span>
+          </button>
+          <button class="mode" onclick="Home.goto('wrong')">
+            <span class="mi red">📕</span>
+            <b>错题本</b>
+            <span id="wrong-sub">智能攻克做错的题目</span>
+          </button>
+          <button class="mode" onclick="Home.goto('fav')">
+            <span class="mi orange">⭐</span>
+            <b>我的收藏</b>
+            <span id="fav-sub">标记重点题目随时复看</span>
+          </button>
+          <button class="mode" onclick="Home.goto('stats')">
+            <span class="mi teal">📊</span>
+            <b>答题统计</b>
+            <span>正确率与分类掌握情况</span>
+          </button>
+        </div>
+
+        <!-- 按分类练习 -->
+        <div class="section-title">按分类练习</div>
+        <div class="card" id="cat-list" style="padding:4px 16px"></div>
+
+        <div style="height:14px"></div>
+        <div style="text-align:center;font-size:11.5px;color:var(--text-3);padding:14px 0 24px">
+          当前题库：<span id="foot-bank-name">通用常识与计算机基础 (示范题库)</span> · 共 <span id="foot-total">0</span> 题
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== 2. 练习页 (Practice Screen) ==================== -->
+  <section id="screen-practice" class="screen">
+    <div class="navbar">
+      <button class="icon-btn" onclick="Practice.exit()">←</button>
+      <div class="nav-title">
+        <span id="p-title">基础练习</span>
+        <small id="p-sub">1 / 1</small>
+      </div>
+      <button class="icon-btn" onclick="Practice.openCard()">☰</button>
+    </div>
+    <div class="practice-toolbar">
+      <div class="mode-switch" id="practice-mode-switch" data-tab="quiz">
+        <div class="mode-glider"></div>
+        <button class="mode-tab active" id="tab-mode-quiz" onclick="Practice.switchType('quiz')">📝 做题模式</button>
+        <button class="mode-tab" id="tab-mode-recite" onclick="Practice.switchType('recite')">📖 背题模式</button>
+      </div>
+    </div>
+    <div id="combo-pill" class="combo-pill hidden"><span class="combo-fire">🔥</span><span id="combo-text">连对 3 题</span></div>
+    <div class="scroll"><div class="wrap" id="p-body"></div></div>
+    <div class="footbar">
+      <button class="btn" id="p-prev" onclick="Practice.step(-1)">上一题</button>
+      <button class="btn sm" id="p-fav" onclick="Practice.toggleFav()">☆</button>
+      <button class="btn primary" id="p-next" onclick="Practice.step(1)">下一题</button>
+    </div>
+  </section>
+
+  <!-- ==================== 3. 模拟考试设置 (Exam Setup) ==================== -->
+  <section id="screen-exam-setup" class="screen">
+    <div class="navbar">
+      <button class="icon-btn" onclick="Nav.back()">←</button>
+      <div class="nav-title">模拟考试设置</div>
+      <button class="icon-btn ghost">·</button>
+    </div>
+    <div class="scroll"><div class="wrap" style="padding-top:16px">
+      <div class="card">
+        <div class="setup-row">
+          <span>试卷类型</span>
+          <div class="chips" id="set-paper">
+            <button class="chip on" data-v="std">标准卷</button>
+            <button class="chip" data-v="custom">自定义</button>
+          </div>
+        </div>
+        <div class="setup-row" id="row-count">
+          <span>试卷题量</span>
+          <div class="chips" id="set-count">
+            <button class="chip" data-v="10">10 题</button>
+            <button class="chip on" data-v="30">30 题</button>
+            <button class="chip" data-v="50">50 题</button>
+            <button class="chip" data-v="100">100 题</button>
+          </div>
+        </div>
+        <div class="setup-row" id="row-scope">
+          <span>抽题范围</span>
+          <div class="chips" id="set-scope">
+            <button class="chip on" data-v="all">全部题目</button>
+            <button class="chip" data-v="single">仅选择题</button>
+            <button class="chip" data-v="judge">仅判断题</button>
+          </div>
+        </div>
+        <div class="setup-row">
+          <span>考试时长</span>
+          <div class="chips" id="set-time">
+            <button class="chip" data-v="20">20 分钟</button>
+            <button class="chip" data-v="45">45 分钟</button>
+            <button class="chip on" data-v="60">60 分钟</button>
+            <button class="chip" data-v="90">90 分钟</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:14px" id="paper-preview"></div>
+
+      <div style="height:18px"></div>
+      <button class="btn primary" style="height:50px;font-size:16.5px" onclick="ExamSetup.start()">
+        开始考试
+      </button>
+
+      <div id="exam-history" style="margin-top:26px"></div>
+      <div style="height:30px"></div>
+    </div></div>
+  </section>
+
+  <!-- ==================== 4. 考试中 (Exam In Progress) ==================== -->
+  <section id="screen-exam" class="screen">
+    <div class="navbar">
+      <button class="icon-btn" onclick="Exam.confirmQuit()">✕</button>
+      <div class="nav-title">
+        <span>模拟考试</span>
+        <small><span id="e-kind">标准卷</span> · <span id="e-sub">1 / 100</span></small>
+      </div>
+      <div class="exam-timer" id="e-timer">--:--</div>
+      <button class="nav-text-btn" onclick="Exam.confirmSubmit()">交卷</button>
+    </div>
+    <div class="scroll"><div class="wrap" id="e-body"></div></div>
+    <div class="footbar">
+      <button class="btn sm" onclick="Exam.openCard()">☰</button>
+      <button class="btn" id="e-prev" onclick="Exam.step(-1)">上一题</button>
+      <button class="btn primary" id="e-next" onclick="Exam.step(1)">下一题</button>
+    </div>
+  </section>
+
+  <!-- ==================== 5. 考试成绩 (Exam Result) ==================== -->
+  <section id="screen-result" class="screen">
+    <div class="navbar">
+      <button class="icon-btn ghost">·</button>
+      <div class="nav-title">考试成绩</div>
+      <button class="icon-btn ghost">·</button>
+    </div>
+    <div class="scroll"><div id="r-body"></div></div>
+  </section>
+
+  <!-- ==================== 6. 错题本 / 收藏 (List Screen) ==================== -->
+  <section id="screen-list" class="screen">
+    <div class="navbar">
+      <button class="icon-btn" onclick="Nav.back()">←</button>
+      <div class="nav-title" id="l-title">错题本</div>
+      <button class="icon-btn" id="l-action" onclick="List.doAction()">▶</button>
+    </div>
+    <div class="scroll"><div class="wrap" id="l-body" style="padding-top:14px"></div></div>
+  </section>
+
+  <!-- ==================== 7. 统计页 (Stats Screen) ==================== -->
+  <section id="screen-stats" class="screen">
+    <div class="navbar">
+      <button class="icon-btn" onclick="Nav.back()">←</button>
+      <div class="nav-title">答题统计</div>
+      <button class="icon-btn ghost">·</button>
+    </div>
+    <div class="scroll"><div class="wrap" id="s-body" style="padding-top:16px"></div></div>
+  </section>
+
+  <!-- ==================== 8. 题库导入工作台 (Import Workbench) ==================== -->
+  <section id="screen-import" class="screen">
+    <div class="navbar">
+      <button class="icon-btn" onclick="Nav.back()">←</button>
+      <div class="nav-title">导入新题库</div>
+      <button class="icon-btn ghost">·</button>
+    </div>
+    <div class="scroll">
+      <div class="wrap" style="padding-top:14px">
+        <!-- 模式切换标签 -->
+        <div class="import-nav-tabs">
+          <button class="import-tab-btn active" id="tab-import-text" onclick="ImportUI.switchTab('text')">⚡ 简易文本导入</button>
+          <button class="import-tab-btn" id="tab-import-file" onclick="ImportUI.switchTab('file')">📁 本地文件导入</button>
+          <button class="import-tab-btn" id="tab-import-json" onclick="ImportUI.switchTab('json')">📄 JSON导入</button>
+          <button class="import-tab-btn" id="tab-import-spec" onclick="ImportUI.switchTab('spec')">📖 格式规范</button>
+        </div>
+
+        <!-- 面板 1: 简易文本导入 (极力推荐) -->
+        <div id="panel-import-text" class="card">
+          <div class="import-form-group">
+            <label class="import-label" for="inp-bank-name">题库名称</label>
+            <input type="text" id="inp-bank-name" class="import-input" placeholder="例如：2026计算机二级考试真题" maxlength="40">
+          </div>
+          <div class="import-form-group">
+            <label class="import-label" for="inp-bank-desc">题库描述 / 备注（可选）</label>
+            <input type="text" id="inp-bank-desc" class="import-input" placeholder="例如：单选与判断综合练习题" maxlength="80">
+          </div>
+
+          <div class="import-toolbar">
+            <span style="font-size:12.5px;font-weight:600;color:var(--text)">粘贴题库内容</span>
+            <div class="import-toolbar-acts">
+              <button class="import-tool-btn" id="btn-fill-template" onclick="ImportUI.fillTemplate()">📋 填入范例模板</button>
+              <button class="import-tool-btn" style="color:var(--err)" onclick="ImportUI.clearText()">🧹 清空</button>
+            </div>
+          </div>
+
+          <textarea id="import-textarea" class="import-textarea" placeholder="在此粘贴您的题库文本，例如：
+
+1. 道德是通过（ ）对一个人的品行发生极大的作用。
+A. 社会舆论
+B. 国家强制执行
+C. 个人的影响
+D. 国家政策
+答案：A
+分类：职业道德
+解析：道德主要靠社会舆论、传统习俗和内心信念起作用。
+
+2. Python 是一种解释型脚本语言。（ ）
+答案：正确
+分类：编程基础"></textarea>
+
+          <!-- 实时识别状态条 -->
+          <div class="import-status-bar" id="import-status-bar">
+            <div class="import-status-chip"><span>总识别:</span> <b id="stat-parsed-total">0</b> 题</div>
+            <div class="import-status-chip brand"><span>单选:</span> <b id="stat-parsed-single">0</b></div>
+            <div class="import-status-chip purple"><span>判断:</span> <b id="stat-parsed-judge">0</b></div>
+            <div class="import-status-chip"><span>分类:</span> <b id="stat-parsed-cats">0</b> 个</div>
+            <div class="import-status-chip ok" id="stat-parsed-status" style="margin-left:auto;display:none">✅ 格式合规</div>
+          </div>
+
+          <!-- 智能容错与排版诊断提示栏 -->
+          <div class="import-diag-bar" id="import-diag-bar" style="display:none;margin-top:10px;padding:10px 14px;border-radius:10px;font-size:12px;line-height:1.5;background:rgba(245, 158, 11, 0.08);color:var(--text);border:1px solid rgba(245, 158, 11, 0.3)">
+            <div style="font-weight:600;display:flex;align-items:center;gap:6px;color:#d97706">
+              <span>⚠️ 智能容错诊断：检测到数据缺陷并已自动修复兜底</span>
+              <span id="import-diag-count" style="margin-left:auto;font-size:11px;background:#fef3c7;color:#b45309;padding:1px 8px;border-radius:10px;font-weight:600">0 条</span>
+            </div>
+            <div id="import-diag-list" style="margin-top:6px;font-size:11.5px;color:var(--text-2);max-height:100px;overflow-y:auto"></div>
+          </div>
+
+          <!-- 解析预览区域 -->
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;margin-bottom:6px">
+            <span style="font-size:13px;font-weight:600;color:var(--text)">试题解析即时预览</span>
+            <span style="font-size:11.5px;color:var(--text-3)" id="preview-count-tip">未输入内容</span>
+          </div>
+          <div class="import-preview-box" id="import-preview-box">
+            <div style="text-align:center;padding:26px 10px;font-size:12.5px;color:var(--text-3)">
+              输入或粘贴文本后，将在此实时生成试题卡片与填空预览
+            </div>
+          </div>
+
+          <div style="height:18px"></div>
+          <button class="btn primary" id="btn-submit-import" style="height:48px;font-size:16px;width:100%" onclick="ImportUI.confirmImport()">
+            🚀 确认导入并立即刷题
+          </button>
+        </div>
+
+        <!-- 面板 2: 本地文件上传 -->
+        <div id="panel-import-file" class="card" style="display:none">
+          <div class="file-dropzone" id="file-dropzone" onclick="$('file-input').click()">
+            <div class="file-dropzone-icon">📁</div>
+            <div class="file-dropzone-text">点击选择文件 或 拖拽至此处</div>
+            <div class="file-dropzone-sub">支持 .txt、.csv、.json、.md 格式文件</div>
+            <input type="file" id="file-input" style="display:none" accept=".txt,.csv,.json,.md" onchange="ImportUI.handleFileSelect(event)">
+          </div>
+          <div id="file-parsed-summary" style="margin-top:14px"></div>
+        </div>
+
+        <!-- 面板 3: JSON 导入 -->
+        <div id="panel-import-json" class="card" style="display:none">
+          <div style="font-size:12.5px;color:var(--text-2);margin-bottom:8px">
+            粘贴符合规范的完整题库 JSON 数据（含 meta 与 questions 数组）：
+          </div>
+          <textarea id="json-textarea" class="import-textarea" style="height:280px" placeholder="{
+  &quot;meta&quot;: { &quot;name&quot;: &quot;示范题库&quot;, &quot;cats&quot;: [&quot;常识&quot;] },
+  &quot;questions&quot;: [ ... ]
+}"></textarea>
+          <div style="height:14px"></div>
+          <button class="btn primary" id="btn-submit-json-import" style="height:46px;width:100%" onclick="ImportUI.confirmJsonImport()">
+            📥 导入 JSON 题库
+          </button>
+        </div>
+
+        <!-- 面板 4: 格式规范文档 -->
+        <div id="panel-import-spec" class="card" style="display:none">
+          <div class="spec-doc-view">
+            <h3 style="margin-top:0">📋 简易题库导入规范详解</h3>
+            <p>本刷题器支持极高容错的题库识别引擎，您无需复杂的排版，只需遵循如下基础结构：</p>
+            
+            <h4>1. 单选题格式</h4>
+            <pre>1. 题干描述（ ）
+A. 选项A
+B. 选项B
+C. 选项C
+D. 选项D
+答案：A
+分类：可选分类
+解析：可选详细解析</pre>
+            <p><b>智能优化</b>：题干括号中若直接带答案（如 <code>（A）</code>），解析器将自动提取答案并重置为空白括号 <code>（ ）</code>，答题时自动获得毛玻璃动态填词效果！如果句末未写括号，系统将自动补齐。</p>
+
+            <h4>2. 判断题格式</h4>
+            <pre>2. 太阳系中体积最大的行星是木星。
+答案：正确
+分类：天文学
+解析：木星体积是地球的1300倍。</pre>
+            <p><b>判定容错</b>：答案支持 <code>正确 / 错误 / 对 / 错 / 是 / 否 / T / F / √ / ×</code>。</p>
+
+            <h4>3. 分类章节标记</h4>
+            <pre># 模块一：基础理论
+1. 试题一...
+2. 试题二...
+
+# 模块二：专业技能
+3. 试题三...</pre>
+
+            <button class="btn" style="margin-top:12px;width:100%" onclick="ImportUI.copySpecTemplate()">
+              📄 复制标准格式模板到剪贴板
+            </button>
+          </div>
+        </div>
+
+        <div style="height:30px"></div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- ==================== 题库切换与管理抽屉 (Bank Drawer) ==================== -->
+<div class="drawer-mask" id="bank-mask" onclick="BankManager.closeDrawer()"></div>
+<div class="drawer" id="bank-drawer">
+  <div class="dh">
+    <b>📚 题库管理与切换</b>
+    <div style="display:flex;align-items:center;gap:8px">
+      <button class="btn-compact primary" onclick="BankManager.closeDrawer(); Nav.goto('import')">➕ 导入题库</button>
+      <button class="close" onclick="BankManager.closeDrawer()">✕</button>
+    </div>
+  </div>
+  <div class="db">
+    <div style="font-size:12.5px;color:var(--text-3);margin-bottom:10px">
+      已载入的题库列表（点击卡片即可无缝切换）：
+    </div>
+    <div class="bank-list" id="bank-list-container"></div>
+    <div style="height:20px"></div>
+  </div>
+</div>
+
+<!-- ==================== 答题卡抽屉 (Card Drawer) ==================== -->
+<div class="drawer-mask" id="card-mask" onclick="Cards.close()"></div>
+<div class="drawer" id="card-drawer">
+  <div class="dh">
+    <b>答题卡</b>
+    <div style="display:flex;align-items:center;gap:10px">
+      <button id="card-clear-btn" class="card-clear-btn" style="display:none" onclick="Cards.clearCurrent()">清理本题库记录</button>
+      <button class="close" onclick="Cards.close()">✕</button>
+    </div>
+  </div>
+  <div class="db">
+    <div class="legend">
+      <span><i style="background:var(--brand-light)"></i>当前</span>
+      <span><i style="background:var(--ok-bg)"></i>答对</span>
+      <span><i style="background:var(--err-bg)"></i>答错</span>
+      <span><i style="background:#f2f5fa"></i>未作答</span>
+    </div>
+    <div class="grid-card" id="card-grid"></div>
+  </div>
+</div>
+
+<!-- ==================== 通用确认弹窗 (Modal) ==================== -->
+<div class="modal-mask" id="modal-mask">
+  <div class="modal">
+    <h3 id="modal-title">提示</h3>
+    <p id="modal-text"></p>
+    <div class="acts">
+      <button class="btn" id="modal-cancel">取消</button>
+      <button class="btn primary" id="modal-ok">确定</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<canvas id="fx-canvas"></canvas>
+
+<!-- 引入题库与智能解析引擎 -->
+<script src="default_qbank.js?v=2.0"></script>
+<script src="parser.js?v=2.0"></script>
+<script src="app.js?v=2.0"></script>
+</body>
+</html>
