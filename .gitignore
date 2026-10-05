@@ -5,3 +5,12 @@ __pycache__/
 .idea/
 *.log
 .DS_Store
+
+# Android build outputs & local config
+.gradle/
+**/build/
+android/local.properties
+android/.gradle/
+android/app/build/
+*.hprof
+.cxx/

@@ -72,3 +72,16 @@ python server.py
 python test_quiz_universal.py
 ```
 包含题库切换、简易文本一键导入、题干括号渲染、做题/背题切换、答题卡操作的完整自动化测试套件。
+
+---
+
+## 📱 Android 安装包 (APK)
+
+本项目提供独立的 Android 原生壳封装，内置离线资源、离线题库存储、振动触觉反馈以及原生返回键栈导航。
+
+- **直接下载安装**：前往 [GitHub Releases](https://github.com/POKMJN/universal-quiz/releases) 或直接下载仓库根目录中的 [`universal-quiz-v1.0.apk`](file:///C:/Users/22816/.gemini/antigravity/scratch/universal-quiz/universal-quiz-v1.0.apk)。
+- **源码工程**：位于 `android/` 目录，可使用 Android Studio 或 Gradle 命令行直接编译：
+  ```bash
+  cd android
+  ./gradlew assembleRelease
+  ```

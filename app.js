@@ -1185,6 +1185,13 @@
       Store.mark(q.id, optIdx);
 
       var isOk = (optIdx === q.answer);
+      try {
+        if (window.AndroidBridge && window.AndroidBridge.vibrate) {
+          window.AndroidBridge.vibrate(isOk ? 'success' : 'error');
+        } else if (navigator.vibrate) {
+          navigator.vibrate(isOk ? 25 : [40, 50, 40]);
+        }
+      } catch (e) {}
       if (isOk) {
         this.combo++;
         if (this.combo >= 2) this.showCombo(this.combo);
@@ -1860,6 +1867,30 @@
   window.FX = FX;
   window.BankManager = BankManager;
   window.ImportUI = ImportUI;
+
+  // Android 原生物理返回键监听支持
+  window.__onBackPressed = function () {
+    var modalMask = $('modal-mask');
+    if (modalMask && modalMask.classList.contains('show')) {
+      Modal.close();
+      return true;
+    }
+    var cardDrawer = $('card-drawer');
+    if (cardDrawer && cardDrawer.classList.contains('open')) {
+      Cards.close();
+      return true;
+    }
+    var bankDrawer = $('bank-drawer');
+    if (bankDrawer && bankDrawer.classList.contains('open')) {
+      BankManager.closeDrawer();
+      return true;
+    }
+    var homeScreen = $('screen-home');
+    if (homeScreen && !homeScreen.classList.contains('active')) {
+      return Nav.back();
+    }
+    return false;
+  };
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', boot);
